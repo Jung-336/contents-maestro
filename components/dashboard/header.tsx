@@ -12,8 +12,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
 
 export function Header() {
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+
+      toast({
+        title: "로그아웃 성공",
+        description: "성공적으로 로그아웃되었습니다.",
+      })
+      router.push("/")
+    } catch (error) {
+      toast({
+        title: "로그아웃 오류",
+        description: "로그아웃 중 오류가 발생했습니다.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -45,7 +70,9 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>로그아웃</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                로그아웃
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

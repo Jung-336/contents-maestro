@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "컨텐츠 마에스트로 - AI 블로그 콘텐츠 생성 서비스",
   description: "AI가 자동으로 블로그 콘텐츠를 작성해주는 서비스. SEO 최적화 조언까지 포함된 콘텐츠를 제공합니다.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
