@@ -58,7 +58,7 @@ export default function SignupPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -68,7 +68,23 @@ export default function SignupPage() {
         },
       })
 
-      if (error) throw error
+      if (signUpError) throw signUpError
+
+      // 초기 크레딧 부여
+      if (user) {
+        const { error: creditsError } = await supabase
+          .from('credits')
+          .insert([
+            {
+              user_id: user.id,
+              amount: 10,
+              type: 'initial',
+              description: '회원가입 보너스'
+            }
+          ])
+
+        if (creditsError) throw creditsError
+      }
 
       toast({
         title: "회원가입 성공",

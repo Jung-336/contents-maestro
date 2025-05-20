@@ -10,6 +10,7 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { ContentPreview } from "@/components/dashboard/content-preview"
 import { Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
 
 export default function DashboardPage() {
   const [topic, setTopic] = useState("")
@@ -43,15 +44,30 @@ export default function DashboardPage() {
 
     setIsGenerating(true)
 
-    // 실제 구현에서는 API 호출로 대체됩니다
-    setTimeout(() => {
+    try {
       // 크레딧 차감
+      const { error: creditsError } = await supabase
+        .from('credits')
+        .insert([
+          {
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            amount: -1,
+            type: 'content_generation',
+            description: `콘텐츠 생성: ${topic}`
+          }
+        ])
+
+      if (creditsError) throw creditsError
+
+      // 크레딧 상태 업데이트
       setCredits((prev) => prev - 1)
 
-      // 샘플 생성 콘텐츠
-      setGeneratedContent({
-        title: `${topic}에 관한 완벽 가이드: 2025년 최신 트렌드와 전략`,
-        content: `
+      // 실제 구현에서는 API 호출로 대체됩니다
+      setTimeout(() => {
+        // 샘플 생성 콘텐츠
+        setGeneratedContent({
+          title: `${topic}에 관한 완벽 가이드: 2025년 최신 트렌드와 전략`,
+          content: `
 # ${topic}에 관한 완벽 가이드: 2025년 최신 트렌드와 전략
 
 ## 소개
@@ -84,25 +100,33 @@ ${topic}은 현대 비즈니스와 일상생활에서 중요한 역할을 합니
 ## 결론
 ${topic}은 계속해서 진화하고 있으며, 최신 트렌드를 파악하고 효과적인 전략을 구현하는 것이 성공의 열쇠입니다. 이 가이드를 참고하여 2025년 ${topic} 전략을 수립하시기 바랍니다.
         `,
-        seoTips: [
-          `주요 키워드: ${topic}, ${topic} 전략, ${topic} 트렌드 2025`,
-          "H1 태그에 주요 키워드를 포함시키세요",
-          "각 섹션에 H2, H3 태그를 사용하여 콘텐츠 구조화",
-          `이미지에 대체 텍스트 추가 (예: '${topic} 인포그래픽')`,
-          `메타 디스크립션: '2025년 ${topic} 트렌드와 성공 전략을 알아보세요. 최신 동향과 효과적인 접근법을 통해 경쟁 우위를 확보하세요.'`,
-          "내부 링크: 관련 콘텐츠로 연결",
-          "외부 링크: 신뢰할 수 있는 통계 자료나 연구 결과 인용",
-          `소셜 미디어 공유 시 관련 해시태그 사용 (#${topic} #트렌드2025)`,
-        ],
-      })
+          seoTips: [
+            `주요 키워드: ${topic}, ${topic} 전략, ${topic} 트렌드 2025`,
+            "H1 태그에 주요 키워드를 포함시키세요",
+            "각 섹션에 H2, H3 태그를 사용하여 콘텐츠 구조화",
+            `이미지에 대체 텍스트 추가 (예: '${topic} 인포그래픽')`,
+            `메타 디스크립션: '2025년 ${topic} 트렌드와 성공 전략을 알아보세요. 최신 동향과 효과적인 접근법을 통해 경쟁 우위를 확보하세요.'`,
+            "내부 링크: 관련 콘텐츠로 연결",
+            "외부 링크: 신뢰할 수 있는 통계 자료나 연구 결과 인용",
+            `소셜 미디어 공유 시 관련 해시태그 사용 (#${topic} #트렌드2025)`,
+          ],
+        })
 
-      setIsGenerating(false)
+        setIsGenerating(false)
 
+        toast({
+          title: "콘텐츠 생성 완료!",
+          description: "AI가 블로그 콘텐츠를 성공적으로 생성했습니다.",
+        })
+      }, 3000)
+    } catch (error) {
       toast({
-        title: "콘텐츠 생성 완료!",
-        description: "AI가 블로그 콘텐츠를 성공적으로 생성했습니다.",
+        title: "콘텐츠 생성 오류",
+        description: "콘텐츠 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
       })
-    }, 3000)
+      setIsGenerating(false)
+    }
   }
 
   const handleSave = () => {
@@ -130,7 +154,7 @@ ${topic}은 계속해서 진화하고 있으며, 최신 트렌드를 파악하�
           <h2 className="text-3xl font-bold tracking-tight">대시보드</h2>
           <p className="text-muted-foreground">블로그 콘텐츠를 생성하고 관리하세요</p>
         </div>
-        <CreditInfo credits={credits} />
+        <CreditInfo />
       </div>
 
       <DashboardStats />
